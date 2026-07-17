@@ -794,4 +794,14 @@ app.use((err, req, res, next) => {
 // EXPORTATION
 // =============================================
 
+// =============================================
+// DÉMARRAGE DU SERVEUR (nécessaire pour Render / hébergement classique)
+// =============================================
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`✅ Serveur démarré sur le port ${PORT}`);
+});
+
 module.exports = app;
