@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ny Antsika - Réservation</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Style CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== NAVIGATION ===== -->
+<nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">
+            <span class="logo-ny-antsika">
+                <span class="logo-icon-custom">NA</span>
+                <span class="logo-text">
+                    Ny Antsika
+                    <span class="sub">Voyages Madagascar</span>
+                </span>
+            </span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+                <li class="nav-item"><a class="nav-link" href="index.html">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link active" href="reservations.html">Réservation</a></li>
+                <li class="nav-item" id="authLinks">
+                    <a class="nav-link nav-btn nav-btn-outline" href="#" id="loginBtn" data-bs-toggle="modal" data-bs-target="#loginModal">Connexion</a>
+                    <a class="nav-link nav-btn nav-btn-primary" href="#" id="registerBtn" data-bs-toggle="modal" data-bs-target="#registerModal">Inscription</a>
+                </li>
+                <li class="nav-item d-none" id="userInfo">
+                    <span class="nav-link text-light"><i class="bi bi-person-circle"></i> <span id="userNameText"></span></span>
+                    <a class="nav-link nav-btn nav-btn-outline" href="#" id="logoutBtn">Déconnexion</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== TOASTS ===== -->
+<div id="toastContainer" style="position: fixed; top: 90px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px;"></div>
+
+<!-- ===== RECHERCHE ===== -->
+<section class="py-5" style="margin-top: 20px;">
+    <div class="container">
+        <h2 class="mb-4"><i class="bi bi-search text-warning"></i> Rechercher un trajet</h2>
+        <div class="card shadow-sm p-4 mb-4">
+            <form id="searchForm">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Départ</label>
+                        <input type="text" class="form-control" id="lieuDepart" placeholder="Antananarivo">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Arrivée</label>
+                        <input type="text" class="form-control" id="lieuArrivee" placeholder="Toamasina">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Date de départ</label>
+                        <input type="date" class="form-control" id="dateDepart">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Passagers</label>
+                        <input type="number" class="form-control" id="passagers" min="1" value="1">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-search"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Résultats de recherche -->
+        <div id="trajetsResults"></div>
+    </div>
+</section>
+
+<!-- ===== DÉTAILS DU TRAJET SÉLECTIONNÉ ===== -->
+<section class="py-4">
+    <div class="container">
+        <div id="trajetDetails"></div>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer-custom py-4">
+    <div class="container text-center">
+        <p class="mb-0">© 2026 Ny Antsika - Voyages Madagascar</p>
+    </div>
+</footer>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-box-arrow-in-right"></i> Connexion</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="loginEmail" placeholder="votre@email.mg" required></div>
+                    <div class="mb-3"><label class="form-label">Mot de passe</label><input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required></div>
+                    <div id="loginError" class="text-danger small"></div>
+                    <button type="submit" class="btn-modal-primary w-100">Se connecter</button>
+                </form>
+                <p class="text-center mt-3 small">Pas encore de compte ? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">S'inscrire</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal fade" id="registerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus"></i> Inscription</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form id="registerForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label class="form-label">Nom</label><input type="text" class="form-control" id="regNom" placeholder="Rakoto" required></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Prénom</label><input type="text" class="form-control" id="regPrenom" placeholder="Jean" required></div>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="regEmail" placeholder="jean@email.mg" required></div>
+                    <div class="mb-3"><label class="form-label">Téléphone</label><input type="tel" class="form-control" id="regTelephone" placeholder="034 00 000 01"></div>
+                    <div class="mb-3"><label class="form-label">Mot de passe</label><input type="password" class="form-control" id="regPassword" placeholder="••••••••" required minlength="6"></div>
+                    <div id="registerError" class="text-danger small"></div>
+                    <button type="submit" class="btn-modal-primary w-100">S'inscrire</button>
+                </form>
+                <p class="text-center mt-3 small">Déjà un compte ? <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">Se connecter</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reservation Modal (avec sélection de sièges) -->
+<div class="modal fade" id="reservationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-ticket"></i> Réservation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="reservationTrajetInfo" class="mb-3 p-3 bg-light rounded"></div>
+
+                <div class="mb-3">
+                    <label class="form-label">Nombre de passagers</label>
+                    <input type="number" class="form-control" id="reservationPassagers" min="1" value="1">
+                </div>
+
+                <label class="form-label">Choisissez vos sièges</label>
+                <div id="siegeContainer" class="mb-3"></div>
+
+                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                    <span>Passagers : <strong id="reservationPassagersCount">1</strong></span>
+                    <span>Sièges : <strong id="reservationSiegesCount">Aucun</strong></span>
+                    <span class="fs-5">Total : <strong id="reservationTotal">0 Ar</strong></span>
+                </div>
+
+                <button class="btn-modal-primary w-100 mt-3" id="confirmReservationBtn">
+                    <i class="bi bi-check-circle"></i> Confirmer la réservation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-check-circle"></i> Réservation confirmée</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Numéro de réservation : <strong id="successReservationId"></strong></p>
+                <p>Trajet : <strong id="successTrajet"></strong></p>
+                <p>Date : <strong id="successDate"></strong></p>
+                <p>Passagers : <strong id="successPassagers"></strong></p>
+                <p>Total payé : <strong id="successTotal"></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning w-100" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="reservations.js"></script>
+</body>
+</html>

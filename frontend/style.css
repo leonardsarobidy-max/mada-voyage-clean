@@ -1,0 +1,252 @@
+/* =============================================
+   NY ANTSIKA VOYAGES - STYLE DE BASE
+   Simple, léger, complète Bootstrap 5 (déjà chargé)
+   ============================================= */
+
+:root {
+    --couleur-principale: #d97706; /* orange/ocre Madagascar */
+    --couleur-fonce: #1f2937;
+    --couleur-claire: #fff7ed;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9fafb;
+    color: #1f2937;
+}
+
+h1, h2, h3, h4, h5, .logo-text {
+    font-family: 'Playfair Display', serif;
+}
+
+/* ===== Navigation ===== */
+.navbar-custom {
+    background-color: var(--couleur-fonce);
+    padding: 0.75rem 0;
+}
+
+.navbar-custom .nav-link {
+    color: #f3f4f6;
+}
+
+.logo-ny-antsika {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.logo-icon-custom {
+    background: var(--couleur-principale);
+    color: #fff;
+    font-weight: 700;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.logo-text {
+    color: #fff;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.logo-text .sub {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #d1d5db;
+}
+
+.nav-btn {
+    border-radius: 6px;
+    padding: 0.4rem 1rem !important;
+    margin-left: 6px;
+}
+
+.nav-btn-outline {
+    border: 1px solid #f3f4f6;
+}
+
+.nav-btn-primary {
+    background: var(--couleur-principale);
+    color: #fff !important;
+}
+
+/* ===== Boutons personnalisés (modals) ===== */
+.btn-modal-primary {
+    background: var(--couleur-principale);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+}
+
+.btn-modal-primary:hover {
+    background: #b45309;
+    color: #fff;
+}
+
+/* ===== Cartes trajets ===== */
+.trajet-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.trajet-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.price, .price-display {
+    color: var(--couleur-principale);
+    font-weight: 700;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #4b5563;
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #9ca3af;
+}
+
+/* ===== Sièges (réservation) ===== */
+.siege {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    margin: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.siege.selected {
+    background: var(--couleur-principale);
+    color: #fff;
+    border-color: var(--couleur-principale);
+}
+
+.siege.disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* ===== Toasts ===== */
+.toast-custom {
+    background: #fff;
+    border-left: 4px solid var(--couleur-principale);
+    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    min-width: 260px;
+}
+
+/* ===== Footer ===== */
+.footer-custom {
+    background: var(--couleur-fonce);
+    color: #d1d5db;
+}
+
+/* ===== Admin Dashboard ===== */
+.admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    width: 250px;
+    background: var(--couleur-fonce);
+    color: #f3f4f6;
+    flex-shrink: 0;
+}
+
+.admin-sidebar a {
+    color: #d1d5db;
+    text-decoration: none;
+    display: block;
+    padding: 0.7rem 1.2rem;
+}
+
+.admin-sidebar a:hover,
+.admin-sidebar a.active {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    border-left: 3px solid var(--couleur-principale);
+}
+
+.admin-content {
+    flex: 1;
+    padding: 2rem;
+}
+
+.admin-card, .admin-section {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 1.5rem;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.badge-custom, .badge-status {
+    border-radius: 20px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--couleur-principale);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+/* ===== Responsive : sidebar admin en haut sur mobile ===== */
+@media (max-width: 768px) {
+    .admin-wrapper {
+        flex-direction: column;
+    }
+    .admin-sidebar {
+        width: 100%;
+    }
+}

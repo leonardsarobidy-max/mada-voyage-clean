@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ny Antsika - Voyages Madagascar</title>
+    
+    <!-- Bootstrap 5 (40%) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Style CSS (5%) -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== NAVIGATION ===== -->
+<nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <span class="logo-ny-antsika">
+                <span class="logo-icon-custom">NA</span>
+                <span class="logo-text">
+                    Ny Antsika
+                    <span class="sub">Voyages Madagascar</span>
+                </span>
+            </span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+                <li class="nav-item"><a class="nav-link active" href="#accueil">Acceuil</a></li>
+                <li class="nav-item"><a class="nav-link" href="#destinations">Destinations</a></li>
+                <li class="nav-item"><a class="nav-link" href="#recherche">Recherche</a></li>
+                <li class="nav-item"><a class="nav-link" href="#historique">Historique</a></li>
+                <li class="nav-item d-none" id="adminNav"><a class="nav-link" href="#admin">Admin</a></li>
+                <li class="nav-item" id="authLinks">
+                    <a class="nav-link nav-btn nav-btn-outline" href="#" id="loginBtn">Connexion</a>
+                    <a class="nav-link nav-btn nav-btn-primary" href="#" id="registerBtn">Inscription</a>
+                </li>
+                <li class="nav-item d-none" id="userInfo">
+                    <span class="nav-link text-light"><i class="bi bi-person-circle"></i> <span id="userNameText"></span></span>
+                    <a class="nav-link nav-btn nav-btn-outline" href="#" id="logoutBtn">Déconnexion</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section id="accueil" class="hero-section">
+    <div class="container">
+        <div class="row align-items-center hero-content">
+            <div class="col-lg-7">
+                <span class="hero-badge"><i class="bi bi-star-fill"></i> Découvrez Madagascar</span>
+                <h1 class="hero-title">
+                      Voyagez à travers<br>
+                    les <span class="highlight">merveilles</span> de<br>
+                    Madagascar
+                </h1>
+                <p class="hero-subtitle">
+                    Explorez les paysages époustouflants et les routes touristiques de l'île rouge.
+                </p>
+                <a href="reservations.html" class="btn-search"><i class="bi bi-search"></i> Réserver maintenant</a>
+                <div class="hero-stats">
+                    <div class="stat-item"><span class="stat-number">15+</span><span class="stat-label">Destinations</span></div>
+                    <div class="stat-item"><span class="stat-number">50+</span><span class="stat-label">Trajets</span></div>
+                    <div class="stat-item"><span class="stat-number">1000+</span><span class="stat-label">Voyageurs</span></div>
+                </div>
+            </div>
+            <div class="col-lg-5 hero-image-container">
+                <div class="floating-card"><div class="icon"><i class="bi bi-geo-alt"></i></div><div><strong>Nosy Be</strong><small>⭐ 4.8</small></div></div>
+                <div class="floating-card" style="bottom:30px;left:-40px;"><div class="icon"><i class="bi bi-tree"></i></div><div><strong>Tsingy</strong><small>⭐ 4.9</small></div></div>
+                <img src="Routes.png" alt="Routes" class="main-image">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== DESTINATIONS ===== -->
+<section id="destinations" class="destinations-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="badge-custom"><i class="bi bi-compass"></i> DESTINATIONS</span>
+            <h2>Les Merveilles de Madagascar</h2>
+            <p>Découvrez les plus belles régions de l'île rouge</p>
+        </div>
+        <div class="row g-4" id="destinationsGrid">
+            <!-- 8 destinations avec images réelles -->
+            <div class="col-lg-3 col-md-6">
+                <div class="destination-card">
+                    <img src="Nosy_Be.png" class="card-img-top" alt="Nosy Be">
+                    <div class="card-body">
+                        <span class="price-tag">350k Ar</span>
+                        <h5 class="card-title">Nosy Be</h5>
+                        <p class="card-text"><i class="bi bi-geo-alt"></i> Diana</p>
+                        <div class="d-flex justify-content-between"><span class="rating"><i class="bi bi-star-fill"></i> 4.8</span><span class="region-badge">🌴 Plage</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="destination-card">
+                    <img src="ste_marie.png" class="card-img-top" alt="Sainte-Marie">
+                    <div class="card-body">
+                        <span class="price-tag">280k Ar</span>
+                        <h5 class="card-title">Île Sainte-Marie</h5>
+                        <p class="card-text"><i class="bi bi-geo-alt"></i> Analanjirofo</p>
+                        <div class="d-flex justify-content-between"><span class="rating"><i class="bi bi-star-fill"></i> 4.7</span><span class="region-badge">🐋 Baleines</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="destination-card">
+                    <img src="tsingy.png" class="card-img-top" alt="Tsingy">
+                    <div class="card-body">
+                        <span class="price-tag">220k Ar</span>
+                        <h5 class="card-title">Tsingy de Bemaraha</h5>
+                        <p class="card-text"><i class="bi bi-geo-alt"></i> Melaky</p>
+                        <div class="d-flex justify-content-between"><span class="rating"><i class="bi bi-star-fill"></i> 4.9</span><span class="region-badge">🏔️ Aventure</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="destination-card">
+                    <img src="baobab.png" class="card-img-top" alt="Andasibe">
+                    <div class="card-body">
+                        <span class="price-tag">120k Ar</span>
+                        <h5 class="card-title">Baobab de Madagascar</h5>
+                        <p class="card-text"><i class="bi bi-geo-alt"></i> Alaotra-Mangoro</p>
+                        <div class="d-flex justify-content-between"><span class="rating"><i class="bi bi-star-fill"></i> 4.6</span><span class="region-badge">🐒 Faune</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="destination-card">
+                    <img src="tana.png" class="card-img-top" alt="Antsirabe">
+                    <div class="card-body">
+                        <span class="price-tag">50k Ar</span>
+                        <h5 class="card-title">Antananarivo</h5>
+                        <p class="card-text"><i class="bi bi-geo-alt"></i> Vakinankaratra</p>
+                        <div class="d-flex justify-content-between"><span class="rating"><i class="bi bi-star-fill"></i> 4.5</span><span class="region-badge">♨️ Thermal</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="destination-card">
+                    <img src="majunga.png" class="card-img-top" alt="Mahajanga">
+                    <div class="card-body">
+                        <span class="price-tag">180k Ar</span>
+                        <h5 class="card-title">Mahajanga</h5>
+                        <p class="card-text"><i class="bi bi-geo-alt"></i> Boeny</p>
+                        <div class="d-flex justify-content-between"><span class="rating"><i class="bi bi-star-fill"></i> 4.4</span><span class="region-badge">⚓ Port</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="destination-card">
+                    <img src="Fianara.png" class="card-img-top" alt="Fianarantsoa">
+                    <div class="card-body">
+                        <span class="price-tag">150k Ar</span>
+                        <h5 class="card-title">Fianarantsoa</h5>
+                        <p class="card-text"><i class="bi bi-geo-alt"></i> Haute Matsiatra</p>
+                        <div class="d-flex justify-content-between"><span class="rating"><i class="bi bi-star-fill"></i> 4.3</span><span class="region-badge">🏛️ Culture</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="destination-card">
+                    <img src="Toliara.png" class="card-img-top" alt="Toliara">
+                    <div class="card-body">
+                        <span class="price-tag">250k Ar</span>
+                        <h5 class="card-title">Toliara</h5>
+                        <p class="card-text"><i class="bi bi-geo-alt"></i> Atsimo-Andrefana</p>
+                        <div class="d-flex justify-content-between"><span class="rating"><i class="bi bi-star-fill"></i> 4.5</span><span class="region-badge">🌵 Désert</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== RECHERCHE ===== -->
+<section id="recherche" class="search-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="badge-custom"><i class="bi bi-search"></i> RECHERCHE</span>
+            <h2>Trouvez votre Trajet</h2>
+            <p>Recherchez parmi nos nombreuses destinations</p>
+        </div>
+        <div class="search-card">
+            <form id="searchForm">
+                <div class="row g-3">
+                    <div class="col-md-3"><label class="form-label">Départ</label><input type="text" class="form-control" id="lieuDepart" placeholder="Antananarivo"></div>
+                    <div class="col-md-3"><label class="form-label">Arrivée</label><input type="text" class="form-control" id="lieuArrivee" placeholder="Nosy Be"></div>
+                    <div class="col-md-2"><label class="form-label">Date</label><input type="date" class="form-control" id="dateDepart"></div>
+                    <div class="col-md-2"><label class="form-label">Passagers</label><input type="number" class="form-control" id="passagers" value="1" min="1"></div>
+                    <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn-search w-100"><i class="bi bi-search"></i> Rechercher</button></div>
+                </div>
+            </form>
+        </div>
+        <div id="resultsContainer" class="results-container"></div>
+    </div>
+</section>
+
+<!-- ===== HISTORIQUE ===== -->
+<section id="historique" class="historique-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="badge-custom"><i class="bi bi-clock-history"></i> HISTORIQUE</span>
+            <h2>Mes Réservations</h2>
+            <p>Retrouvez toutes vos réservations</p>
+        </div>
+        <div id="historiqueContainer">
+            <div class="alert alert-info text-center py-4">
+                <i class="bi bi-info-circle display-6 d-block"></i>
+                <p>Connectez-vous pour voir votre historique</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== ADMIN ===== -->
+<section id="admin" class="admin-section d-none">
+    <div class="container">
+        <div class="section-header">
+            <span class="badge-custom admin-badge"><i class="bi bi-speedometer2"></i> ADMIN</span>
+            <h2>Tableau de Bord</h2>
+            <p>Gérez les trajets et utilisateurs</p>
+        </div>
+        <div class="admin-stats" id="adminStats">
+            <div class="stat-card"><div class="stat-icon"><i class="bi bi-people"></i></div><div class="stat-number" id="statUsers">0</div><div class="stat-label">Utilisateurs</div></div>
+            <div class="stat-card"><div class="stat-icon"><i class="bi bi-ticket"></i></div><div class="stat-number" id="statReservations">0</div><div class="stat-label">Réservations</div></div>
+            <div class="stat-card"><div class="stat-icon"><i class="bi bi-calendar-check"></i></div><div class="stat-number" id="statMonthly">0</div><div class="stat-label">Ce mois</div></div>
+            <div class="stat-card"><div class="stat-icon"><i class="bi bi-cash"></i></div><div class="stat-number" id="statRevenue">0 Ar</div><div class="stat-label">CA</div></div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card admin-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-plus-circle"></i> Ajouter un trajet</h5>
+                        <form id="adminTrajetForm">
+                            <div class="row g-2">
+                                <div class="col-6"><input type="text" class="form-control" placeholder="Départ" id="adminLieuDepart" required></div>
+                                <div class="col-6"><input type="text" class="form-control" placeholder="Arrivée" id="adminLieuArrivee" required></div>
+                                <div class="col-4"><input type="date" class="form-control" id="adminDateDepart" required></div>
+                                <div class="col-4"><input type="time" class="form-control" id="adminHeureDepart" required></div>
+                                <div class="col-4"><input type="number" class="form-control" placeholder="Prix" id="adminPrix" required></div>
+                                <div class="col-12"><input type="number" class="form-control" placeholder="Places" id="adminPlaces" required></div>
+                                <div class="col-12"><button type="submit" class="btn-admin-submit w-100">Ajouter</button></div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4">
+                <h5>
+                    <span class="logo-ny-antsika">
+                        <span class="logo-icon-custom" style="width:40px;height:40px;font-size:1.2rem;">NA</span>
+                        <span class="logo-text" style="font-size:1.3rem;">Ny Antsika<span class="sub">Voyages Madagascar</span></span>
+                    </span>
+                </h5>
+                <p class="mt-3">Explorez les merveilles de Madagascar avec Ny Antsika.</p>
+                <div class="social-links">
+                    <a href="#"><i class="bi bi-facebook"></i></a>
+                    <a href="#"><i class="bi bi-instagram"></i></a>
+                    <a href="#"><i class="bi bi-youtube"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-2"><h5>Destinations</h5><a href="#">Nosy Be</a><a href="#">Tsingy</a><a href="#">Sainte-Marie</a></div>
+            <div class="col-lg-2"><h5>Services</h5><a href="#">Réservation</a><a href="#">Annulation</a><a href="#">Assistance</a></div>
+            <div class="col-lg-4">
+                <h5>Contact</h5>
+                <p><i class="bi bi-geo-alt"></i> Antananarivo, Madagascar</p>
+                <p><i class="bi bi-envelope"></i> contact@nyantsika.mg</p>
+                <p><i class="bi bi-telephone"></i> +261 34 12 345 67</p>
+            </div>
+        </div>
+        <div class="footer-bottom"><p>© 2026 Ny Antsika - Voyages Madagascar</p></div>
+    </div>
+</footer>
+
+<!-- ===== MODALS ===== -->
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-box-arrow-in-right"></i> Connexion</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="loginEmail" placeholder="votre@email.mg" required></div>
+                    <div class="mb-3"><label class="form-label">Mot de passe</label><input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required></div>
+                    <div id="loginError" class="text-danger small"></div>
+                    <button type="submit" class="btn-modal-primary w-100">Se connecter</button>
+                </form>
+                <p class="text-center mt-3 small">Pas encore de compte ? <a href="#" id="switchToRegister">S'inscrire</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal fade" id="registerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus"></i> Inscription</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form id="registerForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label class="form-label">Nom</label><input type="text" class="form-control" id="regNom" placeholder="Rakoto" required></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Prénom</label><input type="text" class="form-control" id="regPrenom" placeholder="Jean" required></div>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="regEmail" placeholder="jean@email.mg" required></div>
+                    <div class="mb-3"><label class="form-label">Téléphone</label><input type="tel" class="form-control" id="regTelephone" placeholder="034 00 000 01"></div>
+                    <div class="mb-3"><label class="form-label">Mot de passe</label><input type="password" class="form-control" id="regPassword" placeholder="••••••••" required minlength="6"></div>
+                    <div id="registerError" class="text-danger small"></div>
+                    <button type="submit" class="btn-modal-primary w-100">S'inscrire</button>
+                </form>
+                <p class="text-center mt-3 small">Déjà un compte ? <a href="#" id="switchToLogin">Se connecter</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reservation Modal -->
+<div class="modal fade" id="reservationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-ticket"></i> Réservation</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div id="reservationDetails"></div>
+                <div class="mt-3"><label class="form-label">Nombre de passagers</label><input type="number" class="form-control" id="reservationPassagers" min="1" value="1"></div>
+                <button class="btn-modal-primary w-100 mt-3" id="confirmReservationBtn"><i class="bi bi-check-circle"></i> Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script JS (10%) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
