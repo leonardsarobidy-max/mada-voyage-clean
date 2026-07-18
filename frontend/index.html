@@ -39,11 +39,11 @@
                 <li class="nav-item"><a class="nav-link" href="#destinations">Destinations</a></li>
                 <li class="nav-item"><a class="nav-link" href="#recherche">Recherche</a></li>
                 <li class="nav-item"><a class="nav-link" href="#historique">Historique</a></li>
-                <li class="nav-item d-none" id="adminNav"><a class="nav-link" href="#admin">Admin</a></li>
                 <li class="nav-item" id="authLinks">
                     <a class="nav-link nav-btn nav-btn-outline" href="#" id="loginBtn">Connexion</a>
                     <a class="nav-link nav-btn nav-btn-primary" href="#" id="registerBtn">Inscription</a>
                 </li>
+                <li class="nav-item d-none" id="adminNav"><a class="nav-link" href="admin-dashboard.html"><i class="bi bi-speedometer2"></i> Admin</a></li>
                 <li class="nav-item d-none" id="userInfo">
                     <span class="nav-link text-light"><i class="bi bi-person-circle"></i> <span id="userNameText"></span></span>
                     <a class="nav-link nav-btn nav-btn-outline" href="#" id="logoutBtn">Déconnexion</a>
@@ -172,7 +172,7 @@
             </div>
             <div class="col-lg-3 col-md-6">
                 <div class="destination-card">
-                    <img src="toliara.png" class="card-img-top" alt="Toliara">
+                    <img src="Toliara.png" class="card-img-top" alt="Toliara">
                     <div class="card-body">
                         <span class="price-tag">250k Ar</span>
                         <h5 class="card-title">Toliara</h5>
@@ -224,46 +224,6 @@
         </div>
     </div>
 </section>
-
-<!-- ===== ADMIN ===== -->
-<section id="admin" class="admin-section d-none">
-    <div class="container">
-        <div class="section-header">
-            <span class="badge-custom admin-badge"><i class="bi bi-speedometer2"></i> ADMIN</span>
-            <h2>Tableau de Bord</h2>
-            <p>Gérez les trajets et utilisateurs</p>
-        </div>
-        <div class="admin-stats" id="adminStats">
-            <div class="stat-card"><div class="stat-icon"><i class="bi bi-people"></i></div><div class="stat-number" id="statUsers">0</div><div class="stat-label">Utilisateurs</div></div>
-            <div class="stat-card"><div class="stat-icon"><i class="bi bi-ticket"></i></div><div class="stat-number" id="statReservations">0</div><div class="stat-label">Réservations</div></div>
-            <div class="stat-card"><div class="stat-icon"><i class="bi bi-calendar-check"></i></div><div class="stat-number" id="statMonthly">0</div><div class="stat-label">Ce mois</div></div>
-            <div class="stat-card"><div class="stat-icon"><i class="bi bi-cash"></i></div><div class="stat-number" id="statRevenue">0 Ar</div><div class="stat-label">CA</div></div>
-        </div>
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card admin-card">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="bi bi-plus-circle"></i> Ajouter un trajet</h5>
-                        <form id="adminTrajetForm">
-                            <div class="row g-2">
-                                <div class="col-6"><input type="text" class="form-control" placeholder="Départ" id="adminLieuDepart" required></div>
-                                <div class="col-6"><input type="text" class="form-control" placeholder="Arrivée" id="adminLieuArrivee" required></div>
-                                <div class="col-4"><input type="date" class="form-control" id="adminDateDepart" required></div>
-                                <div class="col-4"><input type="time" class="form-control" id="adminHeureDepart" required></div>
-                                <div class="col-4"><input type="number" class="form-control" placeholder="Prix" id="adminPrix" required></div>
-                                <div class="col-12"><input type="number" class="form-control" placeholder="Places" id="adminPlaces" required></div>
-                                <div class="col-12"><button type="submit" class="btn-admin-submit w-100">Ajouter</button></div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ===== FOOTER ===== -->
-<footer class="footer">
     <div class="container">
         <div class="row">
             <div class="col-lg-4">
