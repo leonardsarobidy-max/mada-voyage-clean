@@ -74,3 +74,12 @@ historique, et le dashboard admin.
 - Vérifiez aussi les policies RLS de Supabase si des erreurs 500 apparaissent sur
   les inscriptions ou créations de données — `server.js` utilise déjà la clé
   `service_role` pour contourner ça sur les écritures sensibles.
+
+
+
+## supabase passwords : VxK9aNnHg5yQ5xwN
+
+lien du site : https://mada-voyage-clean.onrender.com/index.html#
+lien du supabases : https://supabase.com/dashboard/project/cxqipjzcqucpjskrjkci/editor/17619
+lien git : https://github.com/leonardsarobidy-max/mada-voyage-clean/blob/main/server.js
+lien render : https://dashboard.render.com/web/srv-d9d8jqahil2s73918r7g/logs?t=app&r=1h
