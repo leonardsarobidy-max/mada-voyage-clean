@@ -1,6 +1,6 @@
 // =============================================
-// SERVER.JS - VERSION COMPLÈTE (Sans imports de routes)
-// Toutes les routes utilisées par le frontend sont incluses ici.
+// SERVER.JS - NY ANTSIKA (version complète)
+// Toutes les routes frontend + admin + sièges
 // =============================================
 
 const express = require('express');
@@ -19,21 +19,11 @@ const app = express();
 
 const { createClient } = require('@supabase/supabase-js');
 
-// ✅ Variables d'environnement en priorité, avec vos clés en secours
-// (si les variables ne sont pas configurées sur Vercel, ces valeurs sont utilisées)
 const supabaseUrl = process.env.SUPABASE_URL || 'https://pmpoettqgndtketbhrpa.supabase.co';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcG9ldHRxZ25kdGtldGJocnBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NDcyNDIsImV4cCI6MjA5OTEyMzI0Mn0.RAMGtYWwurErKz389xtYnC3fe86AgoBsV_y-dJmhdmg';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtcG9ldHRxZ25kdGtldGJocnBhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzU0NzI0MiwiZXhwIjoyMDk5MTIzMjQyfQ.l2piVwzjEuuyE8fedyBR7MrF80WWzst9fZ0r9xjLlbI';
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ Variables Supabase manquantes');
-}
-
-// Client public (respecte le RLS) — utilisé pour les lectures classiques
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Client admin (contourne le RLS) — utilisé pour l'inscription et les routes admin,
-// pour éviter les blocages liés aux policies RLS mal configurées
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false }
 });
@@ -43,7 +33,7 @@ console.log('✅ Supabase connecté');
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
 
 // =============================================
-// MIDDLEWARES GLOBAUX
+// MIDDLEWARES
 // =============================================
 
 app.use(cors({
@@ -51,17 +41,11 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// =============================================
-// MIDDLEWARE D'AUTHENTIFICATION (JWT)
-// =============================================
-
 function requireAuth(req, res, next) {
     const authHeader = req.header('Authorization');
-
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
             success: false,
@@ -69,12 +53,9 @@ function requireAuth(req, res, next) {
             message: 'Un token Bearer est requis'
         });
     }
-
     const token = authHeader.replace('Bearer ', '');
-
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded; // { id, email, role }
+        req.user = jwt.verify(token, JWT_SECRET);
         next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
@@ -83,10 +64,6 @@ function requireAuth(req, res, next) {
         return res.status(401).json({ success: false, error: 'Token invalide' });
     }
 }
-
-// =============================================
-// MIDDLEWARE ADMIN (à utiliser APRÈS requireAuth)
-// =============================================
 
 function requireAdmin(req, res, next) {
     if (!req.user) {
@@ -103,7 +80,7 @@ function requireAdmin(req, res, next) {
 }
 
 // =============================================
-// ROUTES AUTH
+// AUTH
 // =============================================
 
 app.get('/api/auth/test', (req, res) => {
@@ -134,8 +111,7 @@ app.post('/api/auth/register', [
             return res.status(400).json({ success: false, error: 'Email déjà utilisé' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const { data: user, error } = await supabaseAdmin
             .from('users')
@@ -210,14 +186,14 @@ app.post('/api/auth/login', [
 });
 
 // =============================================
-// ROUTES CLIENT
+// CLIENT
 // =============================================
 
 app.get('/api/client/test', (req, res) => {
     res.json({ success: true, message: '✅ Route client fonctionne !' });
 });
 
-// --- Liste des trajets disponibles ---
+// Liste des trajets
 app.get('/api/client/trajets', async (req, res) => {
     try {
         const { data, error } = await supabaseAdmin
@@ -237,20 +213,12 @@ app.get('/api/client/trajets', async (req, res) => {
     }
 });
 
-// --- Recherche de trajets (filtres) ---
+// Recherche de trajets
 app.get('/api/client/recherche', async (req, res) => {
     try {
-        const {
-            lieu_depart,
-            lieu_arrivee,
-            date_depart,
-            passagers,
-            region,
-            prix_min,
-            prix_max
-        } = req.query;
+        const { lieu_depart, lieu_arrivee, date_depart, passagers } = req.query;
 
-        let query = supabase
+        let query = supabaseAdmin
             .from('trajets')
             .select('*')
             .eq('disponible', true)
@@ -258,10 +226,7 @@ app.get('/api/client/recherche', async (req, res) => {
 
         if (lieu_depart) query = query.ilike('lieu_depart', `%${lieu_depart}%`);
         if (lieu_arrivee) query = query.ilike('lieu_arrivee', `%${lieu_arrivee}%`);
-        if (region) query = query.or(`region_depart.ilike.%${region}%,region_arrivee.ilike.%${region}%`);
         if (date_depart) query = query.eq('date_depart', date_depart);
-        if (prix_min) query = query.gte('prix', parseFloat(prix_min));
-        if (prix_max) query = query.lte('prix', parseFloat(prix_max));
         if (passagers) query = query.gte('places_disponibles', parseInt(passagers));
 
         const { data, error } = await query
@@ -280,7 +245,7 @@ app.get('/api/client/recherche', async (req, res) => {
     }
 });
 
-// --- Détails d'un trajet (retourne l'objet brut, pas de wrapper) ---
+// Détail d'un trajet
 app.get('/api/client/trajets/:id', async (req, res) => {
     try {
         const { data, error } = await supabaseAdmin
@@ -299,7 +264,27 @@ app.get('/api/client/trajets/:id', async (req, res) => {
     }
 });
 
-// --- Créer une réservation (authentifié) ---
+// Sièges d'un trajet
+app.get('/api/client/trajets/:id/sieges', async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('sieges')
+            .select('*')
+            .eq('trajet_id', req.params.id)
+            .order('numero', { ascending: true });
+
+        if (error) {
+            console.warn('Sièges non disponibles:', error.message);
+            return res.json({ success: true, data: [] });
+        }
+
+        res.json({ success: true, data: data || [] });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Créer une réservation
 app.post('/api/client/reserver', requireAuth, [
     body('trajet_id').notEmpty(),
     body('nombre_passagers').isInt({ min: 1 })
@@ -310,9 +295,15 @@ app.post('/api/client/reserver', requireAuth, [
             return res.status(400).json({ success: false, errors: errors.array() });
         }
 
-        const { trajet_id, nombre_passagers, siege_ids } = req.body;
+        const {
+            trajet_id,
+            nombre_passagers,
+            siege_ids,
+            passagers_details,
+            contact_telephone,
+            contact_email
+        } = req.body;
 
-        // Vérifier le trajet et sa disponibilité
         const { data: trajet, error: trajetError } = await supabaseAdmin
             .from('trajets')
             .select('*')
@@ -331,6 +322,9 @@ app.post('/api/client/reserver', requireAuth, [
         }
 
         const montant_total = trajet.prix * nombre_passagers;
+        const siegesStr = Array.isArray(siege_ids)
+            ? siege_ids.join(',')
+            : (siege_ids || null);
 
         const { data: reservation, error: resError } = await supabaseAdmin
             .from('reservations')
@@ -338,9 +332,12 @@ app.post('/api/client/reserver', requireAuth, [
                 user_id: req.user.id,
                 trajet_id,
                 nombre_passagers,
-                siege_ids: siege_ids || null,
+                siege_ids: siegesStr,
                 montant_total,
                 statut: 'en_attente',
+                passagers_details: passagers_details || null,
+                contact_telephone: contact_telephone || null,
+                contact_email: contact_email || null,
                 date_reservation: new Date().toISOString()
             }])
             .select('*')
@@ -351,11 +348,20 @@ app.post('/api/client/reserver', requireAuth, [
             return res.status(500).json({ success: false, error: 'Erreur lors de la réservation' });
         }
 
-        // Mettre à jour les places disponibles
+        // Décrémenter les places
         await supabaseAdmin
             .from('trajets')
             .update({ places_disponibles: trajet.places_disponibles - nombre_passagers })
             .eq('id', trajet_id);
+
+        // Marquer les sièges comme réservés
+        if (Array.isArray(siege_ids) && siege_ids.length > 0) {
+            await supabaseAdmin
+                .from('sieges')
+                .update({ statut: 'reserve' })
+                .eq('trajet_id', trajet_id)
+                .in('numero', siege_ids);
+        }
 
         res.status(201).json({
             success: true,
@@ -368,7 +374,7 @@ app.post('/api/client/reserver', requireAuth, [
     }
 });
 
-// --- Historique des réservations du client connecté ---
+// Historique client
 app.get('/api/client/historique', requireAuth, async (req, res) => {
     try {
         const { data, error } = await supabaseAdmin
@@ -389,7 +395,7 @@ app.get('/api/client/historique', requireAuth, async (req, res) => {
 });
 
 // =============================================
-// ROUTES ADMIN (protégées par requireAuth + requireAdmin)
+// ADMIN
 // =============================================
 
 app.get('/api/admin/test', (req, res) => {
@@ -418,12 +424,22 @@ app.get('/api/admin/stats', requireAuth, requireAdmin, async (req, res) => {
 
         const revenue = revenueData?.reduce((sum, r) => sum + (r.montant_total || 0), 0) || 0;
 
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count: monthlyCount } = await supabaseAdmin
+            .from('reservations')
+            .select('*', { count: 'exact', head: true })
+            .gte('date_reservation', startOfMonth.toISOString());
+
         res.json({
             success: true,
             users: usersCount || 0,
             reservations: reservationsCount || 0,
             trajetsDisponibles: trajetsCount || 0,
             reservationsEnAttente: pendingCount || 0,
+            monthlyReservations: monthlyCount || 0,
             revenue
         });
     } catch (error) {
@@ -431,7 +447,7 @@ app.get('/api/admin/stats', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// --- Trajets (CRUD) ---
+// --- Trajets CRUD ---
 app.get('/api/admin/trajets', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { data, error } = await supabaseAdmin
@@ -441,6 +457,23 @@ app.get('/api/admin/trajets', requireAuth, requireAdmin, async (req, res) => {
 
         if (error) throw error;
         res.json({ success: true, data: data || [] });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.get('/api/admin/trajets/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('trajets')
+            .select('*')
+            .eq('id', req.params.id)
+            .single();
+
+        if (error || !data) {
+            return res.status(404).json({ success: false, error: 'Trajet non trouvé' });
+        }
+        res.json({ success: true, data });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -458,13 +491,18 @@ app.post('/api/admin/trajets', requireAuth, requireAdmin, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Champs obligatoires manquants' });
         }
 
+        const total = places_totales || places_disponibles || 40;
+
         const { data, error } = await supabaseAdmin
             .from('trajets')
             .insert([{
-                lieu_depart, lieu_arrivee, date_depart,
+                lieu_depart,
+                lieu_arrivee,
+                date_depart,
                 heure_depart: heure_depart || '08:00',
-                prix, places_totales,
-                places_disponibles: places_disponibles ?? places_totales,
+                prix,
+                places_totales: total,
+                places_disponibles: places_disponibles ?? total,
                 region: region || null,
                 vehicule_id: vehicule_id || null,
                 description: description || null,
@@ -475,6 +513,19 @@ app.post('/api/admin/trajets', requireAuth, requireAdmin, async (req, res) => {
             .single();
 
         if (error) throw error;
+
+        // Générer les sièges
+        if (data?.id && data.places_totales) {
+            try {
+                await supabaseAdmin.rpc('generer_sieges_trajet', {
+                    p_trajet_id: data.id,
+                    p_places: data.places_totales
+                });
+            } catch (e) {
+                console.warn('Génération sièges:', e.message);
+            }
+        }
+
         res.status(201).json({ success: true, message: 'Trajet créé', data });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -507,14 +558,20 @@ app.delete('/api/admin/trajets/:id', requireAuth, requireAdmin, async (req, res)
     }
 });
 
-// --- Réservations (admin) ---
+// --- Réservations admin ---
 app.get('/api/admin/reservations', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { data, error } = await supabaseAdmin
+        let query = supabaseAdmin
             .from('reservations')
             .select('*, trajets(*), users(id, nom, prenom, email)')
             .order('date_reservation', { ascending: false });
 
+        const { statut, date_debut, date_fin } = req.query;
+        if (statut) query = query.eq('statut', statut);
+        if (date_debut) query = query.gte('date_reservation', date_debut);
+        if (date_fin) query = query.lte('date_reservation', date_fin + 'T23:59:59');
+
+        const { data, error } = await query;
         if (error) throw error;
         res.json({ success: true, data: data || [] });
     } catch (error) {
@@ -522,8 +579,45 @@ app.get('/api/admin/reservations', requireAuth, requireAdmin, async (req, res) =
     }
 });
 
+app.put('/api/admin/reservations/:id/confirmer', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('reservations')
+            .update({ statut: 'confirmée', updated_at: new Date().toISOString() })
+            .eq('id', req.params.id)
+            .select('*')
+            .single();
+
+        if (error) throw error;
+
+        if (data?.siege_ids && data?.trajet_id) {
+            const nums = String(data.siege_ids)
+                .split(',')
+                .map(n => parseInt(n.trim()))
+                .filter(Boolean);
+            if (nums.length) {
+                await supabaseAdmin
+                    .from('sieges')
+                    .update({ statut: 'occupe' })
+                    .eq('trajet_id', data.trajet_id)
+                    .in('numero', nums);
+            }
+        }
+
+        res.json({ success: true, message: 'Réservation confirmée', data });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.put('/api/admin/reservations/:id/annuler', requireAuth, requireAdmin, async (req, res) => {
     try {
+        const { data: old } = await supabaseAdmin
+            .from('reservations')
+            .select('*')
+            .eq('id', req.params.id)
+            .single();
+
         const { data, error } = await supabaseAdmin
             .from('reservations')
             .update({ statut: 'annulée', updated_at: new Date().toISOString() })
@@ -532,13 +626,45 @@ app.put('/api/admin/reservations/:id/annuler', requireAuth, requireAdmin, async 
             .single();
 
         if (error) throw error;
+
+        if (old) {
+            const { data: trajet } = await supabaseAdmin
+                .from('trajets')
+                .select('places_disponibles')
+                .eq('id', old.trajet_id)
+                .single();
+
+            if (trajet) {
+                await supabaseAdmin
+                    .from('trajets')
+                    .update({
+                        places_disponibles: (trajet.places_disponibles || 0) + (old.nombre_passagers || 0)
+                    })
+                    .eq('id', old.trajet_id);
+            }
+
+            if (old.siege_ids) {
+                const nums = String(old.siege_ids)
+                    .split(',')
+                    .map(n => parseInt(n.trim()))
+                    .filter(Boolean);
+                if (nums.length) {
+                    await supabaseAdmin
+                        .from('sieges')
+                        .update({ statut: 'disponible' })
+                        .eq('trajet_id', old.trajet_id)
+                        .in('numero', nums);
+                }
+            }
+        }
+
         res.json({ success: true, message: 'Réservation annulée', data });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// --- Export réservations (CSV) ---
+// Export CSV réservations
 app.get('/api/admin/export/reservations', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { data, error } = await supabaseAdmin
@@ -549,8 +675,8 @@ app.get('/api/admin/export/reservations', requireAuth, requireAdmin, async (req,
         if (error) throw error;
 
         const rows = data || [];
-        const header = 'id,client,email,depart,arrivee,date_depart,passagers,montant_total,statut\n';
-        const csv = header + rows.map(r => [
+        const header = 'id;client;email;depart;arrivee;date_depart;passagers;montant_total;statut\n';
+        const csv = '\uFEFF' + header + rows.map(r => [
             r.id,
             `${r.users?.nom || ''} ${r.users?.prenom || ''}`.trim(),
             r.users?.email || '',
@@ -560,9 +686,9 @@ app.get('/api/admin/export/reservations', requireAuth, requireAdmin, async (req,
             r.nombre_passagers,
             r.montant_total,
             r.statut
-        ].join(',')).join('\n');
+        ].join(';')).join('\n');
 
-        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', 'attachment; filename="reservations.csv"');
         res.send(csv);
     } catch (error) {
@@ -570,10 +696,13 @@ app.get('/api/admin/export/reservations', requireAuth, requireAdmin, async (req,
     }
 });
 
-// --- Véhicules (CRUD) ---
+// --- Véhicules ---
 app.get('/api/admin/vehicules', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { data, error } = await supabaseAdmin.from('vehicules').select('*').order('created_at', { ascending: false });
+        const { data, error } = await supabaseAdmin
+            .from('vehicules')
+            .select('*')
+            .order('created_at', { ascending: false });
         if (error) throw error;
         res.json({ success: true, data: data || [] });
     } catch (error) {
@@ -584,7 +713,6 @@ app.get('/api/admin/vehicules', requireAuth, requireAdmin, async (req, res) => {
 app.post('/api/admin/vehicules', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { marque, modele, capacite, immatriculation, cooperative_id } = req.body;
-
         if (!marque || !modele || !capacite || !immatriculation) {
             return res.status(400).json({ success: false, error: 'Champs obligatoires manquants' });
         }
@@ -606,6 +734,21 @@ app.post('/api/admin/vehicules', requireAuth, requireAdmin, async (req, res) => 
     }
 });
 
+app.put('/api/admin/vehicules/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('vehicules')
+            .update(req.body)
+            .eq('id', req.params.id)
+            .select('*')
+            .single();
+        if (error) throw error;
+        res.json({ success: true, message: 'Véhicule mis à jour', data });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.delete('/api/admin/vehicules/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { error } = await supabaseAdmin.from('vehicules').delete().eq('id', req.params.id);
@@ -616,10 +759,13 @@ app.delete('/api/admin/vehicules/:id', requireAuth, requireAdmin, async (req, re
     }
 });
 
-// --- Coopératives (CRUD) ---
+// --- Coopératives ---
 app.get('/api/admin/cooperatives', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { data, error } = await supabaseAdmin.from('cooperatives').select('*').order('created_at', { ascending: false });
+        const { data, error } = await supabaseAdmin
+            .from('cooperatives')
+            .select('*')
+            .order('created_at', { ascending: false });
         if (error) throw error;
         res.json({ success: true, data: data || [] });
     } catch (error) {
@@ -630,7 +776,6 @@ app.get('/api/admin/cooperatives', requireAuth, requireAdmin, async (req, res) =
 app.post('/api/admin/cooperatives', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { nom, telephone, email, adresse } = req.body;
-
         if (!nom) {
             return res.status(400).json({ success: false, error: 'Le nom est obligatoire' });
         }
@@ -638,14 +783,32 @@ app.post('/api/admin/cooperatives', requireAuth, requireAdmin, async (req, res) 
         const { data, error } = await supabaseAdmin
             .from('cooperatives')
             .insert([{
-                nom, telephone: telephone || null, email: email || null,
-                adresse: adresse || null, created_at: new Date().toISOString()
+                nom,
+                telephone: telephone || null,
+                email: email || null,
+                adresse: adresse || null,
+                created_at: new Date().toISOString()
             }])
             .select('*')
             .single();
 
         if (error) throw error;
         res.status(201).json({ success: true, message: 'Coopérative ajoutée', data });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.put('/api/admin/cooperatives/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('cooperatives')
+            .update(req.body)
+            .eq('id', req.params.id)
+            .select('*')
+            .single();
+        if (error) throw error;
+        res.json({ success: true, message: 'Coopérative mise à jour', data });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -661,7 +824,7 @@ app.delete('/api/admin/cooperatives/:id', requireAuth, requireAdmin, async (req,
     }
 });
 
-// --- Utilisateurs (liste + suppression) ---
+// --- Utilisateurs ---
 app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { search, role } = req.query;
@@ -671,7 +834,9 @@ app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
             .select('id, email, nom, prenom, telephone, role, status, created_at');
 
         if (role) query = query.eq('role', role);
-        if (search) query = query.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%,email.ilike.%${search}%`);
+        if (search) {
+            query = query.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%,email.ilike.%${search}%`);
+        }
 
         const { data, error } = await query.order('created_at', { ascending: false });
         if (error) throw error;
@@ -684,13 +849,14 @@ app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
 
 app.put('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { role, status, nom, prenom, telephone } = req.body;
+        const { role, status, nom, prenom, telephone, password } = req.body;
         const updateData = { updated_at: new Date().toISOString() };
         if (role) updateData.role = role;
         if (status) updateData.status = status;
         if (nom) updateData.nom = nom;
         if (prenom) updateData.prenom = prenom;
         if (telephone !== undefined) updateData.telephone = telephone;
+        if (password) updateData.password = await bcrypt.hash(password, 10);
 
         const { data, error } = await supabaseAdmin
             .from('users')
@@ -708,13 +874,22 @@ app.put('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
 
 app.delete('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
-        // Empêcher la suppression du dernier admin
-        const { data: user } = await supabaseAdmin.from('users').select('role').eq('id', req.params.id).single();
+        const { data: user } = await supabaseAdmin
+            .from('users')
+            .select('role')
+            .eq('id', req.params.id)
+            .single();
 
         if (user?.role === 'admin') {
-            const { count } = await supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).eq('role', 'admin');
+            const { count } = await supabaseAdmin
+                .from('users')
+                .select('*', { count: 'exact', head: true })
+                .eq('role', 'admin');
             if ((count || 0) <= 1) {
-                return res.status(400).json({ success: false, error: 'Impossible de supprimer le dernier administrateur' });
+                return res.status(400).json({
+                    success: false,
+                    error: 'Impossible de supprimer le dernier administrateur'
+                });
             }
         }
 
@@ -727,7 +902,7 @@ app.delete('/api/admin/users/:id', requireAuth, requireAdmin, async (req, res) =
 });
 
 // =============================================
-// ROUTES DE TEST / SANTÉ
+// SANTÉ / TEST
 // =============================================
 
 app.get('/test', (req, res) => {
@@ -744,14 +919,10 @@ app.get('/api/health', (req, res) => {
 });
 
 // =============================================
-// FRONTEND (fichiers statiques : css, js, images...)
+// FRONTEND STATIQUE
 // =============================================
 
 app.use(express.static(path.join(__dirname, 'frontend')));
-
-// =============================================
-// FRONTEND (Pages HTML)
-// =============================================
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
@@ -766,7 +937,7 @@ app.get('/admin-dashboard.html', (req, res) => {
 });
 
 // =============================================
-// GESTION 404
+// 404 / 500
 // =============================================
 
 app.use((req, res) => {
@@ -776,10 +947,6 @@ app.use((req, res) => {
         path: req.originalUrl
     });
 });
-
-// =============================================
-// GESTION 500
-// =============================================
 
 app.use((err, req, res, next) => {
     console.error('❌ Erreur:', err);
@@ -791,11 +958,7 @@ app.use((err, req, res, next) => {
 });
 
 // =============================================
-// EXPORTATION
-// =============================================
-
-// =============================================
-// DÉMARRAGE DU SERVEUR (nécessaire pour Render / hébergement classique)
+// DÉMARRAGE
 // =============================================
 
 const PORT = process.env.PORT || 3000;
