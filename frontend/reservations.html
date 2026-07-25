@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ny Antsika - Réservation</title>
 
-    <!-- Bootstrap 5 -->
+    <!-- Bootstrap 5 (~40%) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,8 +13,143 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Style CSS -->
+    <!-- Style global -->
     <link rel="stylesheet" href="style.css">
+
+    <!-- CSS local (~10%) -->
+    <style>
+        :root {
+            --primary: #0a2540;
+            --secondary: #f4a261;
+            --accent: #2a9d8f;
+        }
+        body { font-family: 'Poppins', sans-serif; background: #f8f9fc; }
+        h1,h2,h3,h4,h5 { font-family: 'Playfair Display', serif; }
+
+        .trajet-card {
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border: 2px solid transparent;
+            border-radius: 14px;
+        }
+        .trajet-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(10,37,64,0.12);
+            border-color: var(--secondary);
+        }
+        .trajet-card .price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'Playfair Display', serif;
+        }
+
+        .passager-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .passager-card h6 { color: var(--primary); font-weight: 600; }
+
+        /* Plan de bus */
+        .bus-plan { background: #f1f3f5; border-radius: 14px; padding: 1.25rem; }
+        .siege-grid-header {
+            text-align: center;
+            background: var(--primary);
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+        }
+        .siege-grid-body {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            max-width: 340px;
+            margin: 0 auto;
+        }
+        .siege {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid transparent;
+        }
+        .siege.available { background: #d4edda; color: #155724; }
+        .siege.available:hover { background: #c3e6cb; transform: scale(1.08); }
+        .siege.selected { background: var(--secondary); color: var(--primary); border-color: #e07c3a; }
+        .siege.occupied { background: #f8d7da; color: #721c24; cursor: not-allowed; opacity: 0.75; }
+        .siege.aisle { background: transparent; border: none; cursor: default; pointer-events: none; }
+
+        .siege-legend { display: flex; gap: 1.1rem; justify-content: center; font-size: 0.8rem; flex-wrap: wrap; }
+        .siege-legend-color {
+            display: inline-block; width: 14px; height: 14px;
+            border-radius: 4px; margin-right: 4px; vertical-align: middle;
+        }
+        .siege-legend-color.available { background: #d4edda; }
+        .siege-legend-color.selected { background: var(--secondary); }
+        .siege-legend-color.occupied { background: #f8d7da; }
+
+        .toast-custom {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+            border-left: 4px solid var(--secondary);
+            padding: 14px 18px;
+            min-width: 280px;
+            animation: slideIn 0.3s ease;
+        }
+        .toast-custom.success { border-left-color: #28a745; }
+        .toast-custom.error { border-left-color: #dc3545; }
+        .toast-custom.warning { border-left-color: #ffc107; }
+        .toast-custom.info { border-left-color: #17a2b8; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .btn-modal-primary {
+            background: linear-gradient(135deg, #f4a261, #f7c948);
+            color: var(--primary);
+            border: none;
+            border-radius: 30px;
+            padding: 12px 28px;
+            font-weight: 700;
+            transition: 0.25s;
+        }
+        .btn-modal-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 22px rgba(244,162,97,0.35);
+            color: var(--primary);
+        }
+        .footer-custom {
+            background: #06182a;
+            color: rgba(255,255,255,0.55);
+            border-top: 2px solid var(--secondary);
+        }
+        .step-badge {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--secondary);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-right: 8px;
+        }
+    </style>
 </head>
 <body>
 
@@ -50,46 +185,52 @@
     </div>
 </nav>
 
-<!-- ===== TOASTS ===== -->
-<div id="toastContainer" style="position: fixed; top: 90px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px;"></div>
+<!-- Toasts -->
+<div id="toastContainer" style="position:fixed;top:90px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:10px;"></div>
 
 <!-- ===== RECHERCHE ===== -->
-<section class="py-5" style="margin-top: 20px;">
+<section class="py-5" style="margin-top:10px;">
     <div class="container">
-        <h2 class="mb-4"><i class="bi bi-search text-warning"></i> Rechercher un trajet</h2>
-        <div class="card shadow-sm p-4 mb-4">
+        <div class="d-flex align-items-center mb-4">
+            <span class="step-badge">1</span>
+            <h2 class="mb-0">Rechercher un trajet</h2>
+        </div>
+
+        <div class="card shadow-sm border-0 p-4 mb-4">
             <form id="searchForm">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label">Départ</label>
+                        <label class="form-label fw-semibold">Départ</label>
                         <input type="text" class="form-control" id="lieuDepart" placeholder="Antananarivo">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Arrivée</label>
+                        <label class="form-label fw-semibold">Arrivée</label>
                         <input type="text" class="form-control" id="lieuArrivee" placeholder="Toamasina">
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Date de départ</label>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Date</label>
                         <input type="date" class="form-control" id="dateDepart">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Passagers</label>
+                        <label class="form-label fw-semibold">Passagers</label>
                         <input type="number" class="form-control" id="passagers" min="1" value="1">
                     </div>
-                    <div class="col-md-1">
-                        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-search"></i></button>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-warning w-100 fw-bold">
+                            <i class="bi bi-search"></i> Rechercher
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
 
-        <!-- Résultats de recherche -->
+        <!-- Résultats -->
         <div id="trajetsResults"></div>
     </div>
 </section>
 
-<!-- ===== DÉTAILS DU TRAJET SÉLECTIONNÉ ===== -->
-<section class="py-4">
+<!-- ===== DÉTAILS TRAJET ===== -->
+<section class="pb-5">
     <div class="container">
         <div id="trajetDetails"></div>
     </div>
@@ -102,69 +243,112 @@
     </div>
 </footer>
 
-<!-- ===== MODALS ===== -->
-
-<!-- Login Modal -->
+<!-- ===== MODAL CONNEXION ===== -->
 <div class="modal fade" id="loginModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-box-arrow-in-right"></i> Connexion</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body">
-                <form id="loginForm">
-                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="loginEmail" placeholder="votre@email.mg" required></div>
-                    <div class="mb-3"><label class="form-label">Mot de passe</label><input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required></div>
-                    <div id="loginError" class="text-danger small"></div>
-                    <button type="submit" class="btn-modal-primary w-100">Se connecter</button>
-                </form>
-                <p class="text-center mt-3 small">Pas encore de compte ? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">S'inscrire</a></p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Register Modal -->
-<div class="modal fade" id="registerModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus"></i> Inscription</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body">
-                <form id="registerForm">
-                    <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Nom</label><input type="text" class="form-control" id="regNom" placeholder="Rakoto" required></div>
-                        <div class="col-md-6 mb-3"><label class="form-label">Prénom</label><input type="text" class="form-control" id="regPrenom" placeholder="Jean" required></div>
-                    </div>
-                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="regEmail" placeholder="jean@email.mg" required></div>
-                    <div class="mb-3"><label class="form-label">Téléphone</label><input type="tel" class="form-control" id="regTelephone" placeholder="034 00 000 01"></div>
-                    <div class="mb-3"><label class="form-label">Mot de passe</label><input type="password" class="form-control" id="regPassword" placeholder="••••••••" required minlength="6"></div>
-                    <div id="registerError" class="text-danger small"></div>
-                    <button type="submit" class="btn-modal-primary w-100">S'inscrire</button>
-                </form>
-                <p class="text-center mt-3 small">Déjà un compte ? <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">Se connecter</a></p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Reservation Modal (avec sélection de sièges) -->
-<div class="modal fade" id="reservationModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-ticket"></i> Réservation</h5>
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom border-warning">
+                <h5 class="modal-title"><i class="bi bi-box-arrow-in-right text-warning"></i> Connexion</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="loginEmail" placeholder="votre@email.mg" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
+                    </div>
+                    <div id="loginError" class="text-danger small mb-2"></div>
+                    <button type="submit" class="btn-modal-primary w-100">Se connecter</button>
+                </form>
+                <p class="text-center mt-3 small mb-0">
+                    Pas encore de compte ?
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">S'inscrire</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL INSCRIPTION ===== -->
+<div class="modal fade" id="registerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom border-warning">
+                <h5 class="modal-title"><i class="bi bi-person-plus text-warning"></i> Inscription</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="registerForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="regNom" placeholder="Rakoto" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom</label>
+                            <input type="text" class="form-control" id="regPrenom" placeholder="Jean" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="regEmail" placeholder="jean@email.mg" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" class="form-control" id="regTelephone" placeholder="034 00 000 01">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" class="form-control" id="regPassword" placeholder="••••••••" required minlength="6">
+                    </div>
+                    <div id="registerError" class="text-danger small mb-2"></div>
+                    <button type="submit" class="btn-modal-primary w-100">S'inscrire</button>
+                </form>
+                <p class="text-center mt-3 small mb-0">
+                    Déjà un compte ?
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">Se connecter</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL RÉSERVATION ===== -->
+<div class="modal fade" id="reservationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom border-warning">
+                <h5 class="modal-title"><i class="bi bi-ticket text-warning"></i> Réservation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Infos trajet -->
                 <div id="reservationTrajetInfo" class="mb-3 p-3 bg-light rounded"></div>
 
+                <!-- Étape 2 : nombre + formulaires passagers -->
                 <div class="mb-3">
-                    <label class="form-label">Nombre de passagers</label>
-                    <input type="number" class="form-control" id="reservationPassagers" min="1" value="1">
+                    <label class="form-label fw-semibold">
+                        <span class="step-badge" style="width:22px;height:22px;font-size:0.75rem;">2</span>
+                        Nombre de passagers
+                    </label>
+                    <input type="number" class="form-control" id="reservationPassagers" min="1" value="1" style="max-width:120px;">
                 </div>
 
-                <label class="form-label">Choisissez vos sièges</label>
-                <div id="siegeContainer" class="mb-3"></div>
+                <div id="passagersForms" class="mb-4"></div>
 
-                <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                <!-- Étape 3 : sièges -->
+                <label class="form-label fw-semibold">
+                    <span class="step-badge" style="width:22px;height:22px;font-size:0.75rem;">3</span>
+                    Choisissez vos sièges
+                </label>
+                <div id="siegeContainer" class="bus-plan mb-3"></div>
+
+                <!-- Récap -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center p-3 bg-light rounded gap-2">
                     <span>Passagers : <strong id="reservationPassagersCount">1</strong></span>
                     <span>Sièges : <strong id="reservationSiegesCount">Aucun</strong></span>
                     <span class="fs-5">Total : <strong id="reservationTotal">0 Ar</strong></span>
@@ -178,23 +362,27 @@
     </div>
 </div>
 
-<!-- Success Modal -->
+<!-- ===== MODAL SUCCÈS + TICKET PDF ===== -->
 <div class="modal fade" id="successModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title"><i class="bi bi-check-circle"></i> Réservation confirmée</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p>Numéro de réservation : <strong id="successReservationId"></strong></p>
+            <div class="modal-body p-4">
+                <p>N° réservation : <strong id="successReservationId"></strong></p>
                 <p>Trajet : <strong id="successTrajet"></strong></p>
                 <p>Date : <strong id="successDate"></strong></p>
                 <p>Passagers : <strong id="successPassagers"></strong></p>
-                <p>Total payé : <strong id="successTotal"></strong></p>
+                <p>Sièges : <strong id="successSieges"></strong></p>
+                <p class="mb-0">Total : <strong id="successTotal"></strong></p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-warning w-100" data-bs-dismiss="modal">Fermer</button>
+            <div class="modal-footer flex-column gap-2">
+                <button type="button" class="btn btn-warning w-100 fw-bold" id="downloadTicketBtn">
+                    <i class="bi bi-file-earmark-pdf"></i> Télécharger le ticket PDF
+                </button>
+                <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal">Fermer</button>
             </div>
         </div>
     </div>
@@ -202,6 +390,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="reservations.js"></script>
 </body>
 </html>
