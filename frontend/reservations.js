@@ -1,17 +1,17 @@
 // =============================================
-// RESERVATIONS.JS - NY ANTSIKA (~40% interactions)
-// Aligné sur le schéma Supabase + table sieges
+// RESERVATIONS.JS - NY ANTSIKA (complet)
+// Recherche + sièges + historique + PDF si confirmée
+// Compatible Render : API_URL = origin + /api
 // =============================================
 
 const API_URL = window.location.origin + '/api';
-// En dev local si besoin :
-// const API_URL = 'http://localhost:3000/api';
 
 let currentUser = null;
 let currentToken = null;
 let selectedTrajet = null;
 let selectedSieges = [];
 let lastReservationResult = null;
+let mesReservations = [];
 
 // =============================================
 // 1. INITIALISATION
@@ -19,17 +19,19 @@ let lastReservationResult = null;
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     setupEventListeners();
+    ensureHistoriqueSection();
     loadTrajets();
 
     const urlParams = new URLSearchParams(window.location.search);
     const trajetId = urlParams.get('trajet_id');
     if (trajetId) loadTrajetDetails(trajetId);
 
-    // Date min = aujourd'hui
     const dateInput = document.getElementById('dateDepart');
     if (dateInput) {
         dateInput.min = new Date().toISOString().split('T')[0];
     }
+
+    if (currentUser) loadHistorique();
 });
 
 // =============================================
@@ -78,11 +80,10 @@ function setupEventListeners() {
     document.getElementById('reservationPassagers')?.addEventListener('input', () => {
         renderPassagersForms();
         updatePrice();
-        // Limiter le nombre de sièges sélectionnés
         const max = parseInt(document.getElementById('reservationPassagers').value) || 1;
         if (selectedSieges.length > max) {
             selectedSieges = selectedSieges.slice(0, max);
-            generateSieges(); // refresh UI
+            generateSieges();
         }
     });
 
@@ -93,9 +94,15 @@ function setupEventListeners() {
         logout();
     });
 
-    document.getElementById('downloadTicketBtn')?.addEventListener('click', downloadTicketPDF);
+    document.getElementById('downloadTicketBtn')?.addEventListener('click', () => {
+        const statut = lastReservationResult?.reservation?.statut || 'en_attente';
+        if (statut !== 'confirmée') {
+            showToast('Le billet PDF sera disponible après confirmation par l\'administrateur.', 'warning');
+            return;
+        }
+        downloadTicketPDF(lastReservationResult);
+    });
 
-    // Login
     document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('loginEmail').value.trim();
@@ -120,12 +127,12 @@ function setupEventListeners() {
             updateUIForLoggedInUser();
             showToast('Connexion réussie !', 'success');
             if (selectedTrajet) loadTrajetDetails(selectedTrajet.id);
+            loadHistorique();
         } catch (err) {
             document.getElementById('loginError').textContent = err.message;
         }
     });
 
-    // Register
     document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = {
@@ -156,14 +163,190 @@ function setupEventListeners() {
 }
 
 // =============================================
-// 4. RECHERCHE & LISTE TRAJETS
+// 4. HISTORIQUE (bas de page)
+// =============================================
+function ensureHistoriqueSection() {
+    if (document.getElementById('historiqueSection')) return;
+
+    const footer = document.querySelector('footer');
+    const section = document.createElement('section');
+    section.id = 'historiqueSection';
+    section.className = 'py-5 bg-white border-top';
+    section.innerHTML = `
+        <div class="container">
+            <div class="d-flex align-items-center mb-4">
+                <span class="step-badge">4</span>
+                <h2 class="mb-0">Mes réservations</h2>
+            </div>
+            <div id="historiqueContainer">
+                <div class="alert alert-info text-center py-4 mb-0">
+                    <i class="bi bi-person-circle display-6 d-block mb-2"></i>
+                    <p class="mb-0">Connectez-vous pour voir vos demandes de réservation</p>
+                </div>
+            </div>
+        </div>`;
+    if (footer) footer.parentNode.insertBefore(section, footer);
+    else document.body.appendChild(section);
+}
+
+async function loadHistorique() {
+    const container = document.getElementById('historiqueContainer');
+    if (!container) return;
+
+    if (!currentUser || !currentToken) {
+        container.innerHTML = `
+            <div class="alert alert-info text-center py-4 mb-0">
+                <i class="bi bi-person-circle display-6 d-block mb-2"></i>
+                <p class="mb-0">Connectez-vous pour voir vos demandes de réservation</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-warning" role="status"></div>
+        </div>`;
+
+    try {
+        const res = await fetch(`${API_URL}/client/historique`, {
+            headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+        if (!res.ok) throw new Error('Erreur chargement historique');
+        const result = await res.json();
+        mesReservations = Array.isArray(result) ? result : (result.data || []);
+        displayHistorique(mesReservations);
+    } catch (error) {
+        container.innerHTML = `
+            <div class="alert alert-warning text-center">${error.message}</div>`;
+    }
+}
+
+function displayHistorique(list) {
+    const container = document.getElementById('historiqueContainer');
+    if (!container) return;
+
+    if (!list || list.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-light text-center py-4 mb-0 border">
+                <i class="bi bi-inbox display-6 d-block text-muted mb-2"></i>
+                <p class="mb-0">Aucune demande de réservation</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="row g-3">
+            ${list.map(r => {
+                const trajet = r.trajets || {};
+                const depart = trajet.lieu_depart || '—';
+                const arrivee = trajet.lieu_arrivee || '—';
+                const dateDep = trajet.date_depart
+                    ? new Date(trajet.date_depart).toLocaleDateString('fr-FR') : '—';
+                const statut = r.statut || 'en_attente';
+                const badgeClass =
+                    statut === 'confirmée' ? 'bg-success' :
+                    statut === 'annulée' ? 'bg-danger' : 'bg-warning text-dark';
+                const statutLabel =
+                    statut === 'confirmée' ? 'Confirmée' :
+                    statut === 'annulée' ? 'Annulée' : 'En attente de confirmation';
+                const sieges = r.siege_ids ? String(r.siege_ids) : '—';
+
+                const pdfBtn = statut === 'confirmée'
+                    ? `<button class="btn btn-sm btn-warning fw-bold" onclick="downloadTicketFromHistorique('${r.id}')">
+                           <i class="bi bi-file-earmark-pdf"></i> Télécharger le billet PDF
+                       </button>`
+                    : `<button class="btn btn-sm btn-outline-secondary" disabled>
+                           <i class="bi bi-lock"></i> Billet indisponible
+                       </button>`;
+
+                const infoMsg = statut === 'en_attente'
+                    ? `<p class="small text-warning mb-0"><i class="bi bi-hourglass-split"></i> En attente de confirmation par l'admin.</p>`
+                    : statut === 'confirmée'
+                    ? `<p class="small text-success mb-0"><i class="bi bi-check-circle"></i> Confirmée — vous pouvez télécharger le billet.</p>`
+                    : `<p class="small text-danger mb-0"><i class="bi bi-x-circle"></i> Annulée.</p>`;
+
+                return `
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                                <div>
+                                    <h6 class="mb-1"><i class="bi bi-geo-alt text-warning"></i> ${depart} → ${arrivee}</h6>
+                                    <p class="small text-muted mb-0">
+                                        <i class="bi bi-calendar3"></i> ${dateDep}
+                                        · <i class="bi bi-people"></i> ${r.nombre_passagers || 1} pers.
+                                        · Sièges : ${sieges}
+                                        · <strong>${Number(r.montant_total || 0).toLocaleString()} Ar</strong>
+                                    </p>
+                                </div>
+                                <span class="badge ${badgeClass}">${statutLabel}</span>
+                            </div>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2 pt-2 border-top">
+                                ${infoMsg}
+                                ${pdfBtn}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>`;
+}
+
+function downloadTicketFromHistorique(reservationId) {
+    const r = mesReservations.find(x => x.id === reservationId);
+    if (!r) {
+        showToast('Réservation introuvable', 'error');
+        return;
+    }
+    if (r.statut !== 'confirmée') {
+        showToast('Billet disponible uniquement après confirmation admin.', 'warning');
+        return;
+    }
+
+    const trajet = r.trajets || {};
+    let passagers = [];
+    try {
+        passagers = typeof r.passagers_details === 'string'
+            ? JSON.parse(r.passagers_details)
+            : (r.passagers_details || []);
+    } catch (_) {
+        passagers = [];
+    }
+    if (!passagers.length) {
+        passagers = [{
+            nom: currentUser?.nom || '',
+            prenom: currentUser?.prenom || '',
+            telephone: currentUser?.telephone || null
+        }];
+    }
+
+    const sieges = r.siege_ids
+        ? String(r.siege_ids).split(',').map(s => parseInt(s.trim())).filter(Boolean)
+        : [];
+
+    downloadTicketPDF({
+        reservation: r,
+        trajet: {
+            lieu_depart: trajet.lieu_depart || '—',
+            lieu_arrivee: trajet.lieu_arrivee || '—',
+            date_depart: trajet.date_depart,
+            heure_depart: trajet.heure_depart
+        },
+        passagers,
+        sieges,
+        total: Number(r.montant_total || 0)
+    });
+}
+
+// =============================================
+// 5. RECHERCHE & LISTE TRAJETS
 // =============================================
 async function searchTrajets() {
     const params = new URLSearchParams();
-    const lieuDepart = document.getElementById('lieuDepart')?.value.trim();
-    const lieuArrivee = document.getElementById('lieuArrivee')?.value.trim();
-    const dateDepart = document.getElementById('dateDepart')?.value;
-    const passagers = document.getElementById('passagers')?.value || 1;
+    const lieuDepart = document.getElementById('lieuDepart')?.value.trim() || '';
+    const lieuArrivee = document.getElementById('lieuArrivee')?.value.trim() || '';
+    const dateDepart = document.getElementById('dateDepart')?.value || '';
+    const passagers = document.getElementById('passagers')?.value || '1';
 
     if (lieuDepart) params.append('lieu_depart', lieuDepart);
     if (lieuArrivee) params.append('lieu_arrivee', lieuArrivee);
@@ -178,7 +361,68 @@ async function searchTrajets() {
         </div>`;
 
     try {
-        const res = await fetch(`${API_URL}/client/recherche?${params}`);
+        let res = await fetch(`${API_URL}/client/recherche?${params}`);
+        let trajets = [];
+
+        if (res.ok) {
+            const result = await res.json();
+            trajets = Array.isArray(result) ? result : (result.data || result.trajets || []);
+        }
+
+        // Fallback : tous les trajets + filtre local
+        if (!res.ok || trajets.length === 0) {
+            const res2 = await fetch(`${API_URL}/client/trajets`);
+            if (!res2.ok) {
+                const err = await res2.json().catch(() => ({}));
+                throw new Error(err.error || `Erreur ${res2.status}`);
+            }
+            const result2 = await res2.json();
+            trajets = Array.isArray(result2) ? result2 : (result2.data || result2.trajets || []);
+
+            if (lieuDepart) {
+                trajets = trajets.filter(t =>
+                    (t.lieu_depart || '').toLowerCase().includes(lieuDepart.toLowerCase())
+                );
+            }
+            if (lieuArrivee) {
+                trajets = trajets.filter(t =>
+                    (t.lieu_arrivee || '').toLowerCase().includes(lieuArrivee.toLowerCase())
+                );
+            }
+            if (dateDepart) {
+                trajets = trajets.filter(t =>
+                    String(t.date_depart || '').startsWith(dateDepart)
+                );
+            }
+            if (passagers) {
+                const n = parseInt(passagers, 10) || 1;
+                trajets = trajets.filter(t => (t.places_disponibles || 0) >= n);
+            }
+        }
+
+        displayTrajets(trajets);
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = `
+            <div class="alert alert-danger text-center">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                ${error.message || 'Erreur de recherche'}
+            </div>`;
+    }
+}
+
+async function loadTrajets() {
+    const container = document.getElementById('trajetsResults');
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-warning" role="status"></div>
+                <p class="mt-2 text-muted small">Chargement des trajets...</p>
+            </div>`;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/client/trajets`);
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.error || `Erreur ${res.status}`);
@@ -188,23 +432,14 @@ async function searchTrajets() {
         displayTrajets(trajets);
     } catch (error) {
         console.error(error);
-        container.innerHTML = `
-            <div class="alert alert-danger text-center">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                ${error.message || 'Erreur de recherche. Vérifiez que le serveur est démarré.'}
-            </div>`;
-    }
-}
-
-async function loadTrajets() {
-    try {
-        const res = await fetch(`${API_URL}/client/trajets`);
-        if (!res.ok) throw new Error('Erreur chargement');
-        const result = await res.json();
-        const trajets = Array.isArray(result) ? result : (result.data || result.trajets || []);
-        displayTrajets(trajets);
-    } catch (error) {
-        console.error(error);
+        if (container) {
+            container.innerHTML = `
+                <div class="alert alert-warning text-center">
+                    <i class="bi bi-wifi-off me-2"></i>
+                    Impossible de charger les trajets.<br>
+                    <small class="text-muted">${error.message}</small>
+                </div>`;
+        }
         showToast('Impossible de charger les trajets', 'error');
     }
 }
@@ -218,7 +453,7 @@ function displayTrajets(trajets) {
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-search display-4 d-block mb-2"></i>
                 <h5>Aucun trajet trouvé</h5>
-                <p>Modifiez vos critères de recherche</p>
+                <p>Essayez sans date, ou avec moins de filtres.</p>
             </div>`;
         return;
     }
@@ -238,16 +473,16 @@ function displayTrajets(trajets) {
                                     <i class="bi bi-geo-alt text-warning"></i>
                                     ${t.lieu_depart} → ${t.lieu_arrivee}
                                 </h5>
-                                <span class="badge ${t.places_disponibles > 5 ? 'bg-success' : 'bg-warning text-dark'}">
-                                    ${t.places_disponibles} places
+                                <span class="badge ${(t.places_disponibles || 0) > 5 ? 'bg-success' : 'bg-warning text-dark'}">
+                                    ${t.places_disponibles || 0} places
                                 </span>
                             </div>
                             <p class="mb-1 small"><i class="bi bi-calendar3 text-primary me-1"></i>
-                                ${new Date(t.date_depart).toLocaleDateString('fr-FR')}</p>
+                                ${t.date_depart ? new Date(t.date_depart).toLocaleDateString('fr-FR') : '—'}</p>
                             <p class="mb-1 small"><i class="bi bi-clock text-primary me-1"></i> ${t.heure_depart || '—'}</p>
                             ${t.region ? `<p class="mb-1 small"><i class="bi bi-pin-map text-primary me-1"></i> ${t.region}</p>` : ''}
                             <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                                <span class="price">${Number(t.prix).toLocaleString()} <small>Ar</small></span>
+                                <span class="price">${Number(t.prix || 0).toLocaleString()} <small>Ar</small></span>
                                 <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); selectTrajet('${t.id}')">
                                     <i class="bi bi-ticket me-1"></i> Choisir
                                 </button>
@@ -260,7 +495,7 @@ function displayTrajets(trajets) {
 }
 
 // =============================================
-// 5. DÉTAILS TRAJET
+// 6. DÉTAILS TRAJET
 // =============================================
 async function selectTrajet(trajetId) {
     try {
@@ -279,7 +514,6 @@ async function loadTrajetDetails(trajetId) {
         const res = await fetch(`${API_URL}/client/trajets/${trajetId}`);
         if (!res.ok) throw new Error('Trajet non trouvé');
         selectedTrajet = await res.json();
-        // Si le backend renvoie { data: ... }
         if (selectedTrajet.data) selectedTrajet = selectedTrajet.data;
         displayTrajetDetails(selectedTrajet);
     } catch (error) {
@@ -293,8 +527,8 @@ function displayTrajetDetails(trajet) {
     if (!container) return;
 
     const date = new Date(trajet.date_depart);
-    const isPast = date < new Date(new Date().setHours(0, 0, 0, 0));
-    const isAvailable = trajet.places_disponibles > 0 && trajet.disponible !== false;
+    const isPast = !isNaN(date) && date < new Date(new Date().setHours(0, 0, 0, 0));
+    const isAvailable = (trajet.places_disponibles || 0) > 0 && trajet.disponible !== false;
 
     container.innerHTML = `
         <div class="d-flex align-items-center mb-3">
@@ -314,7 +548,7 @@ function displayTrajetDetails(trajet) {
                             <div class="col-sm-6">
                                 <i class="bi bi-calendar3 text-primary me-1"></i>
                                 <strong>Date :</strong>
-                                ${date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                ${!isNaN(date) ? date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
                             </div>
                             <div class="col-sm-6">
                                 <i class="bi bi-clock text-primary me-1"></i>
@@ -323,8 +557,8 @@ function displayTrajetDetails(trajet) {
                             <div class="col-sm-6">
                                 <i class="bi bi-people text-primary me-1"></i>
                                 <strong>Places :</strong>
-                                <span class="${trajet.places_disponibles < 5 ? 'text-warning' : 'text-success'}">
-                                    ${trajet.places_disponibles} / ${trajet.places_totales}
+                                <span class="${(trajet.places_disponibles || 0) < 5 ? 'text-warning' : 'text-success'}">
+                                    ${trajet.places_disponibles || 0} / ${trajet.places_totales || '—'}
                                 </span>
                             </div>
                             ${trajet.region ? `
@@ -333,11 +567,10 @@ function displayTrajetDetails(trajet) {
                                 <strong>Région :</strong> ${trajet.region}
                             </div>` : ''}
                         </div>
-                        ${trajet.description ? `<div class="mt-3 p-3 bg-light rounded small">${trajet.description}</div>` : ''}
                     </div>
                     <div class="col-md-4">
                         <div class="p-3 bg-light rounded h-100 d-flex flex-column justify-content-center text-center">
-                            <div class="display-5 fw-bold text-primary">${Number(trajet.prix).toLocaleString()}</div>
+                            <div class="display-5 fw-bold text-primary">${Number(trajet.prix || 0).toLocaleString()}</div>
                             <p class="text-muted mb-3">Ar / passager</p>
                             ${isPast ? `
                                 <div class="alert alert-warning mb-0 py-2"><i class="bi bi-clock-history"></i> Trajet passé</div>
@@ -366,14 +599,14 @@ function displayTrajetDetails(trajet) {
 }
 
 // =============================================
-// 6. MODAL RÉSERVATION
+// 7. MODAL RÉSERVATION
 // =============================================
 function openReservationModal() {
     if (!selectedTrajet) {
         showToast('Sélectionnez un trajet', 'warning');
         return;
     }
-    if (selectedTrajet.places_disponibles <= 0) {
+    if ((selectedTrajet.places_disponibles || 0) <= 0) {
         showToast('Ce trajet est complet', 'error');
         return;
     }
@@ -417,16 +650,13 @@ function renderPassagersForms() {
             <h6><i class="bi bi-person"></i> Passager ${i}</h6>
             <div class="row g-2">
                 <div class="col-md-4">
-                    <input type="text" class="form-control form-control-sm passager-nom"
-                           placeholder="Nom *" data-index="${i}" required>
+                    <input type="text" class="form-control form-control-sm passager-nom" placeholder="Nom *" required>
                 </div>
                 <div class="col-md-4">
-                    <input type="text" class="form-control form-control-sm passager-prenom"
-                           placeholder="Prénom *" data-index="${i}" required>
+                    <input type="text" class="form-control form-control-sm passager-prenom" placeholder="Prénom *" required>
                 </div>
                 <div class="col-md-4">
-                    <input type="tel" class="form-control form-control-sm passager-tel"
-                           placeholder="Téléphone" data-index="${i}">
+                    <input type="tel" class="form-control form-control-sm passager-tel" placeholder="Téléphone">
                 </div>
             </div>
         </div>`;
@@ -435,7 +665,7 @@ function renderPassagersForms() {
 }
 
 // =============================================
-// 7. SIÈGES (plan de bus)
+// 8. SIÈGES
 // =============================================
 async function generateSieges() {
     const container = document.getElementById('siegeContainer');
@@ -450,9 +680,8 @@ async function generateSieges() {
             const result = await res.json();
             sieges = Array.isArray(result) ? result : (result.data || []);
         }
-    } catch (_) { /* fallback ci-dessous */ }
+    } catch (_) {}
 
-    // Fallback si pas d'API sièges : génération locale
     if (!sieges.length) {
         const total = Math.min(selectedTrajet.places_totales || 20, 40);
         const occupiedCount = Math.max(0, (selectedTrajet.places_totales || total) - (selectedTrajet.places_disponibles || 0));
@@ -461,21 +690,16 @@ async function generateSieges() {
             occupiedSet.add(Math.floor(Math.random() * total) + 1);
         }
         for (let i = 1; i <= total; i++) {
-            sieges.push({
-                numero: i,
-                statut: occupiedSet.has(i) ? 'occupe' : 'disponible'
-            });
+            sieges.push({ numero: i, statut: occupiedSet.has(i) ? 'occupe' : 'disponible' });
         }
     }
 
-    // Grille 2+couloir+2
     let bodyHtml = '';
     sieges.forEach((s, idx) => {
         const num = s.numero;
         const isOccupied = s.statut === 'occupe' || s.statut === 'reserve';
         const isSelected = selectedSieges.includes(num);
 
-        // Insérer un "couloir" après chaque 2 sièges
         if (idx > 0 && idx % 2 === 0 && (idx / 2) % 2 === 1) {
             bodyHtml += `<div class="siege aisle"></div>`;
         }
@@ -485,7 +709,7 @@ async function generateSieges() {
         else if (isSelected) cls += 'selected';
         else cls += 'available';
 
-        bodyHtml += `<div class="${cls}" data-siege="${num}" ${isOccupied ? '' : `onclick="toggleSiegeSelection(${num})"`}>
+        bodyHtml += `<div class="${cls}" ${isOccupied ? '' : `onclick="toggleSiegeSelection(${num})"`}>
             ${num}${isSelected ? ' ✓' : ''}${isOccupied ? ' ✕' : ''}
         </div>`;
     });
@@ -529,7 +753,7 @@ function updatePrice() {
 }
 
 // =============================================
-// 8. CONFIRMATION RÉSERVATION
+// 9. CONFIRMATION RÉSERVATION
 // =============================================
 function collectPassagers() {
     const noms = document.querySelectorAll('.passager-nom');
@@ -581,7 +805,7 @@ async function confirmReservation() {
         return;
     }
 
-    if (!confirm(`Confirmer la réservation de ${nombrePassagers} passager(s) pour ${selectedTrajet.lieu_depart} → ${selectedTrajet.lieu_arrivee} ?`)) {
+    if (!confirm(`Envoyer la demande pour ${nombrePassagers} passager(s) ?\nLe billet PDF sera disponible après confirmation admin.`)) {
         return;
     }
 
@@ -605,8 +829,10 @@ async function confirmReservation() {
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || 'Erreur lors de la réservation');
 
+        const reservation = result.reservation || result.data || result;
+
         lastReservationResult = {
-            reservation: result.reservation || result.data || result,
+            reservation,
             trajet: selectedTrajet,
             passagers,
             sieges: [...selectedSieges],
@@ -616,9 +842,9 @@ async function confirmReservation() {
         bootstrap.Modal.getInstance(document.getElementById('reservationModal'))?.hide();
         showSuccessModal(lastReservationResult);
 
-        // Rafraîchir
         loadTrajets();
         loadTrajetDetails(selectedTrajet.id);
+        loadHistorique();
         selectedSieges = [];
     } catch (error) {
         console.error(error);
@@ -628,6 +854,8 @@ async function confirmReservation() {
 
 function showSuccessModal(data) {
     const r = data.reservation || {};
+    const statut = r.statut || 'en_attente';
+
     document.getElementById('successReservationId').textContent =
         (r.id || 'N/A').toString().substring(0, 8).toUpperCase();
     document.getElementById('successTrajet').textContent =
@@ -640,6 +868,19 @@ function showSuccessModal(data) {
     document.getElementById('successTotal').textContent =
         data.total.toLocaleString() + ' Ar';
 
+    const pdfBtn = document.getElementById('downloadTicketBtn');
+    if (pdfBtn) {
+        if (statut === 'confirmée') {
+            pdfBtn.disabled = false;
+            pdfBtn.className = 'btn btn-warning w-100 fw-bold';
+            pdfBtn.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> Télécharger le ticket PDF';
+        } else {
+            pdfBtn.disabled = true;
+            pdfBtn.className = 'btn btn-secondary w-100';
+            pdfBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> En attente de confirmation admin';
+        }
+    }
+
     new bootstrap.Modal(document.getElementById('successModal')).show();
 }
 
@@ -647,27 +888,36 @@ function resetReservationForm() {
     selectedSieges = [];
     const input = document.getElementById('reservationPassagers');
     if (input) input.value = 1;
-    document.getElementById('reservationTotal').textContent = '0 Ar';
-    document.getElementById('passagersForms').innerHTML = '';
-    document.getElementById('siegeContainer').innerHTML = '';
+    const totalEl = document.getElementById('reservationTotal');
+    if (totalEl) totalEl.textContent = '0 Ar';
+    const forms = document.getElementById('passagersForms');
+    if (forms) forms.innerHTML = '';
+    const sieges = document.getElementById('siegeContainer');
+    if (sieges) sieges.innerHTML = '';
 }
 
 // =============================================
-// 9. TICKET PDF
+// 10. TICKET PDF (uniquement si confirmée)
 // =============================================
-function downloadTicketPDF() {
-    if (!lastReservationResult) {
+function downloadTicketPDF(data) {
+    if (!data) {
         showToast('Aucune réservation à exporter', 'warning');
+        return;
+    }
+    if ((data.reservation?.statut || 'en_attente') !== 'confirmée') {
+        showToast('Billet PDF disponible uniquement après confirmation admin.', 'warning');
+        return;
+    }
+    if (!window.jspdf) {
+        showToast('Bibliothèque PDF non chargée', 'error');
         return;
     }
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const data = lastReservationResult;
     const r = data.reservation || {};
-    const t = data.trajet;
+    const t = data.trajet || {};
 
-    // En-tête
     doc.setFillColor(10, 37, 64);
     doc.rect(0, 0, 210, 35, 'F');
     doc.setTextColor(244, 162, 97);
@@ -680,75 +930,55 @@ function downloadTicketPDF() {
 
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
 
     let y = 50;
-    doc.setFont('helvetica', 'bold');
-    doc.text('N° Réservation :', 20, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text((r.id || 'N/A').toString().substring(0, 8).toUpperCase(), 70, y);
+    const line = (label, value) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(label, 20, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(String(value), 70, y);
+        y += 10;
+    };
 
-    y += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Trajet :', 20, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${t.lieu_depart}  →  ${t.lieu_arrivee}`, 70, y);
+    line('N° Réservation :', (r.id || 'N/A').toString().substring(0, 8).toUpperCase());
+    line('Statut :', 'CONFIRMÉE');
+    line('Trajet :', `${t.lieu_depart || '—'}  →  ${t.lieu_arrivee || '—'}`);
+    line('Date départ :', t.date_depart
+        ? `${new Date(t.date_depart).toLocaleDateString('fr-FR')} à ${t.heure_depart || '—'}`
+        : '—');
+    line('Sièges :', (data.sieges || []).sort((a, b) => a - b).join(', ') || '—');
+    line('Montant total :', Number(data.total || 0).toLocaleString() + ' Ar');
 
-    y += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Date départ :', 20, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(
-        `${new Date(t.date_depart).toLocaleDateString('fr-FR')}  à  ${t.heure_depart || '—'}`,
-        70, y
-    );
-
-    y += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Sièges :', 20, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.sieges.sort((a, b) => a - b).join(', '), 70, y);
-
-    y += 10;
-    doc.setFont('helvetica', 'bold');
-    doc.text('Montant total :', 20, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.total.toLocaleString() + ' Ar', 70, y);
-
-    // Passagers
-    y += 18;
+    y += 8;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text('Passagers', 20, y);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
 
-    data.passagers.forEach((p, i) => {
+    (data.passagers || []).forEach((p, i) => {
         y += 9;
         doc.text(
-            `${i + 1}. ${p.prenom} ${p.nom}${p.siege ? ' — Siège ' + p.siege : ''}${p.telephone ? ' — ' + p.telephone : ''}`,
+            `${i + 1}. ${p.prenom || ''} ${p.nom || ''}${p.siege ? ' — Siège ' + p.siege : ''}`,
             25, y
         );
     });
 
-    // Pied
     y = 270;
     doc.setDrawColor(244, 162, 97);
-    doc.setLineWidth(0.5);
     doc.line(20, y, 190, y);
     y += 8;
     doc.setFontSize(9);
     doc.setTextColor(100);
-    doc.text('Présentez ce ticket (imprimé ou sur mobile) lors de l\'embarquement.', 20, y);
+    doc.text('Présentez ce ticket lors de l\'embarquement.', 20, y);
     doc.text('Ny Antsika — contact@nyantsika.mg — +261 34 12 345 67', 20, y + 6);
 
-    const filename = `ticket-nyantsika-${(r.id || Date.now()).toString().substring(0, 8)}.pdf`;
-    doc.save(filename);
+    doc.save(`ticket-nyantsika-${(r.id || Date.now()).toString().substring(0, 8)}.pdf`);
     showToast('Ticket PDF téléchargé !', 'success');
 }
 
 // =============================================
-// 10. TOAST & LOGOUT
+// 11. TOAST & LOGOUT
 // =============================================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
@@ -779,7 +1009,9 @@ function logout() {
     localStorage.removeItem('user');
     currentUser = null;
     currentToken = null;
+    mesReservations = [];
     updateUIForLoggedInUser();
     showToast('Déconnexion réussie', 'info');
     if (selectedTrajet) loadTrajetDetails(selectedTrajet.id);
+    loadHistorique();
 }
